@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: dial112-ai-query-assistant
+    env: node
+    buildCommand: npm install && npm run seed
+    startCommand: npm start
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false

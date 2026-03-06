@@ -1,6 +1,5 @@
 node_modules/
 .env
-dial112.db
 *.xlsx
 *.db-shm
 *.db-wal
