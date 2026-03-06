@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Dial 112 Emergency Response Query Assistant - Analyze emergency call data using natural language powered by AI">
+  <title>Dial 112 | AI Query Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <div class="logo-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="currentColor" stroke-width="2" fill="none" />
+              <path d="M12 8V16M8 10V14M16 10V14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div class="logo-text">
+            <h1>Dial 112</h1>
+            <span>AI Query Assistant</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-stats" id="sidebar-stats">
+        <div class="stat-card">
+          <div class="stat-icon calls">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
+            </svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value" id="stat-total">--</span>
+            <span class="stat-label">Total Calls</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon critical">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value" id="stat-critical">--</span>
+            <span class="stat-label">Critical</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon resolved">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value" id="stat-resolved">--</span>
+            <span class="stat-label">Resolved</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon response">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </div>
+          <div class="stat-info">
+            <span class="stat-value" id="stat-response">--</span>
+            <span class="stat-label">Avg Response (min)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-suggestions">
+        <h3>Try asking</h3>
+        <button class="suggestion-btn" onclick="useSuggestion(this)">
+          How many emergency calls were received this month?
+        </button>
+        <button class="suggestion-btn" onclick="useSuggestion(this)">
+          Show me the top 5 districts by number of calls
+        </button>
+        <button class="suggestion-btn" onclick="useSuggestion(this)">
+          What is the distribution of incident types?
+        </button>
+        <button class="suggestion-btn" onclick="useSuggestion(this)">
+          Show monthly trend of emergency calls
+        </button>
+        <button class="suggestion-btn" onclick="useSuggestion(this)">
+          Which incidents have critical severity?
+        </button>
+        <button class="suggestion-btn" onclick="useSuggestion(this)">
+          Average response time by district
+        </button>
+      </div>
+
+      <div class="sidebar-footer">
+        <p>Powered by <strong>Gemini AI</strong></p>
+      </div>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <main class="chat-area">
+      <div class="chat-header">
+        <button class="menu-toggle" id="menu-toggle" onclick="toggleSidebar()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <div class="header-info">
+          <h2>Emergency Data Assistant</h2>
+          <div class="status-badge">
+            <span class="status-dot"></span>
+            <span>Online</span>
+          </div>
+        </div>
+        <button class="clear-btn" onclick="clearChat()" title="Clear conversation">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="chat-messages" id="chat-messages">
+        <!-- Welcome message -->
+        <div class="message assistant-message fade-in">
+          <div class="message-avatar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" />
+              <path d="M12 8V16M8 10V14M16 10V14" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div class="message-content">
+            <div class="message-text">
+              <h3>👋 Welcome to Dial 112 Query Assistant</h3>
+              <p>I can help you analyze emergency call data using natural language. Just ask me anything about the
+                calls, incidents, response times, or trends!</p>
+              <div class="example-queries">
+                <p><strong>Try questions like:</strong></p>
+                <ul>
+                  <li>"How many road accidents happened in Lucknow?"</li>
+                  <li>"Show me severity distribution as a pie chart"</li>
+                  <li>"What's the average response time for critical incidents?"</li>
+                  <li>"List the most recent 10 emergency calls"</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-input-container">
+        <div class="chat-input-wrapper">
+          <textarea id="chat-input" placeholder="Ask anything about emergency call data..." rows="1"
+            onkeydown="handleKeyDown(event)" oninput="autoResize(this)"></textarea>
+          <button class="send-btn" id="send-btn" onclick="sendMessage()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
+        </div>
+        <p class="input-hint">Press <kbd>Enter</kbd> to send, <kbd>Shift + Enter</kbd> for new line</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
