@@ -4,8 +4,11 @@ const cors = require('cors');
 const Database = require('better-sqlite3');
 const Groq = require('groq-sdk');
 const path = require('path');
+const multer = require('multer');
+const fs = require('fs');
 
 const app = express();
+const upload = multer({ dest: 'uploads/' });
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -215,6 +218,33 @@ app.get('/api/stats', (req, res) => {
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+// Handle Audio Transcription via Groq
+app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No audio file provided' });
+        }
+
+        const transcription = await groq.audio.transcriptions.create({
+            file: fs.createReadStream(req.file.path),
+            model: "whisper-large-v3",
+        });
+
+        // Clean up the temp file
+        fs.unlink(req.file.path, (err) => {
+            if (err) console.error("Failed to delete temp audio file:", err);
+        });
+
+        res.json({ text: transcription.text });
+    } catch (err) {
+        console.error('Transcription error:', err);
+        if (req.file) {
+            fs.unlink(req.file.path, () => { });
+        }
+        res.status(500).json({ error: 'Failed to transcribe audio' });
     }
 });
 

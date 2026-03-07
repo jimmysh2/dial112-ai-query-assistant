@@ -3,3 +3,4 @@ node_modules/
 *.xlsx
 *.db-shm
 *.db-wal
+uploads/

@@ -746,3 +746,77 @@ function copySQL(btn, sql) {
         setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
     });
 }
+
+// ========================================
+// Voice Recording
+// ========================================
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false;
+
+async function toggleRecording() {
+    const micBtn = document.getElementById('mic-btn');
+    if (isRecording) {
+        mediaRecorder.stop();
+        micBtn.classList.remove('recording');
+        isRecording = false;
+        return;
+    }
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.addEventListener('dataavailable', event => {
+            audioChunks.push(event.data);
+        });
+
+        mediaRecorder.addEventListener('stop', async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            await sendAudioToTranscribe(audioBlob);
+            // Stop all tracks to release mic
+            stream.getTracks().forEach(track => track.stop());
+        });
+
+        mediaRecorder.start();
+        micBtn.classList.add('recording');
+        isRecording = true;
+    } catch (e) {
+        console.error('Error accessing microphone:', e);
+        alert('Could not access microphone. Please ensure permissions are granted.');
+    }
+}
+
+async function sendAudioToTranscribe(blob) {
+    const input = document.getElementById('chat-input');
+    const originalPlaceholder = input.placeholder;
+    input.placeholder = "Transcribing...";
+    input.disabled = true;
+
+    try {
+        const formData = new FormData();
+        formData.append('audio', blob, 'recording.webm');
+
+        const res = await fetch(`${API_BASE}/api/transcribe`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await res.json();
+        if (data.text) {
+            input.value = data.text;
+            autoResize(input);
+            sendMessage();
+        } else if (data.error) {
+            alert('Transcription error: ' + data.error);
+        }
+    } catch (e) {
+        console.error('Transcription failed:', e);
+        alert('Failed to transcribe audio.');
+    } finally {
+        input.placeholder = originalPlaceholder;
+        input.disabled = false;
+        input.focus();
+    }
+}
