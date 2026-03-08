@@ -223,26 +223,34 @@ app.get('/api/stats', (req, res) => {
 
 // Handle Audio Transcription via Groq
 app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
+    let filePath = req.file ? req.file.path : null;
+
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No audio file provided' });
         }
 
+        // Groq API requires a valid audio extension (.webm, .mp3, etc.)
+        // Multer removes the extension by default, so we rename it
+        const newFilePath = filePath + '.webm';
+        fs.renameSync(filePath, newFilePath);
+        filePath = newFilePath;
+
         const transcription = await groq.audio.transcriptions.create({
-            file: fs.createReadStream(req.file.path),
+            file: fs.createReadStream(filePath),
             model: "whisper-large-v3",
         });
 
         // Clean up the temp file
-        fs.unlink(req.file.path, (err) => {
+        fs.unlink(filePath, (err) => {
             if (err) console.error("Failed to delete temp audio file:", err);
         });
 
         res.json({ text: transcription.text });
     } catch (err) {
         console.error('Transcription error:', err);
-        if (req.file) {
-            fs.unlink(req.file.path, () => { });
+        if (filePath) {
+            fs.unlink(filePath, () => { });
         }
         res.status(500).json({ error: 'Failed to transcribe audio' });
     }
